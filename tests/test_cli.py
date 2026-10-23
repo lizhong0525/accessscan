@@ -170,3 +170,18 @@ def test_non_ascii_output_does_not_crash_on_legacy_console(tmp_path, monkeypatch
     monkeypatch.setattr("sys.stderr", err)
     rc = main(["scan", "--from-file", str(src)])
     assert rc == EXIT_FAIL
+
+
+def test_regression_fixture_demo_delta(tmp_path, capsys):
+    """README demo step 4: one fix + one regression vs baseline."""
+    regression = FIXTURE.with_name("axe-result.bad-page.regression.json")
+    bl = tmp_path / "baseline.json"
+    main(["scan", "--from-file", str(FIXTURE), "--baseline", str(bl),
+          "--update-baseline"])
+    capsys.readouterr()
+    rc = main(["scan", "--from-file", str(regression), "--baseline", str(bl)])
+    out = capsys.readouterr().out
+    assert rc == EXIT_FAIL
+    assert "Baseline: 1 new, 7 known, 1 fixed since baseline" in out
+    assert 'img[src="chart.png"]' in out
+    assert "[FIXED] heading-order" in out

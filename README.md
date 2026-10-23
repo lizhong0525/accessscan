@@ -12,7 +12,7 @@ That replays a saved axe-core scan of the included broken fixture page — no br
 
 ## Demo walkthrough (2 minutes, no browser needed)
 
-`fixtures/bad-page.html` is a page with deliberately planted issues (missing `lang`, missing `<title>`, image without `alt`, unlabeled input, low contrast, skipped heading level, empty link). `fixtures/axe-result.bad-page.json` is the axe-core result for it.
+`fixtures/bad-page.html` is a page with deliberately planted issues (missing `lang`, missing `<title>`, image without `alt`, unlabeled input, low contrast, skipped heading level, empty link). `fixtures/axe-result.bad-page.json` is the axe-core result for it; `fixtures/axe-result.bad-page.regression.json` is a variant with one issue fixed and one new one, used in step 4 below.
 
 ```bash
 # 1. Scan: 7 violations + 1 "needs review" are reported, exit code 1
@@ -24,7 +24,10 @@ python -m accessscan scan --from-file fixtures/axe-result.bad-page.json --baseli
 # 3. Same scan now passes — known issues are tolerated, exit code 0
 python -m accessscan scan --from-file fixtures/axe-result.bad-page.json --baseline baseline.json
 
-# 4. Introduce a new violation (or fix one) and re-run: only the delta fails the build
+# 4. A later scan with one issue fixed and one new regression:
+#    only the delta is reported, exit code 1 because of the NEW issue
+python -m accessscan scan --from-file fixtures/axe-result.bad-page.regression.json --baseline baseline.json
+#    -> Baseline: 1 new, 7 known, 1 fixed since baseline
 ```
 
 Open `report.html` to see issues grouped as new/known, with impact badges, CSS selectors, and links to the axe rule documentation.
@@ -37,12 +40,15 @@ AccessScan never implements its own accessibility rules — live scans inject th
 pip install playwright && playwright install chromium
 npm install axe-core   # provides node_modules/axe-core/axe.min.js
 
+# serve the included broken demo page on the port the fixture config expects
+python -m http.server 8080 --directory fixtures &
+
 python -m accessscan scan --config fixtures/accessscan.config.json \
     --screenshot-dir screenshots --json report.json --html report.html \
     --baseline baseline.json
 ```
 
-The config file lists `base_url` and `routes`; each route is visited headlessly, axe-core runs inside the page, and each offending element gets a CSS selector plus a best-effort screenshot.
+The config file lists `base_url` and `routes`; each route is visited headlessly, axe-core runs inside the page, and each offending element gets a CSS selector plus a best-effort screenshot. Point `base_url`/`routes` at your own app for real use — the fixture config targets the demo page above.
 
 ### Authenticated local test environments
 
@@ -70,7 +76,7 @@ A passing AccessScan report is **not** WCAG certification and not a statement of
 ## Development
 
 ```bash
-python -m pytest -q   # 32 tests, offline, no browser
+python -m pytest -q   # offline, no browser, no extra installs beyond pytest
 ```
 
 ## Known limitations

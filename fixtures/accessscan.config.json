@@ -1,5 +1,5 @@
 {
   "base_url": "http://localhost:8080",
-  "routes": ["/", "/login", "/dashboard"],
+  "routes": ["/bad-page.html"],
   "tags": ["wcag2a", "wcag2aa"]
 }
