@@ -54,11 +54,15 @@ def _print_summary(
     issues: list[Issue], new: list[Issue], existing: list[Issue], fixed: list[dict]
 ) -> None:
     s = summarize(issues)
+    total = s["violations"] + s["incomplete"]
     print(f"Scanned routes: {len({i.route for i in issues}) or 0}")
     print(
-        f"Findings: {s['violations']} violations "
-        f"({len(new)} new, {len(existing)} known), "
-        f"{s['incomplete']} need manual review, {len(fixed)} fixed since baseline"
+        f"Findings: {total} total ({s['violations']} violations, "
+        f"{s['incomplete']} need manual review)"
+    )
+    print(
+        f"Baseline: {len(new)} new, {len(existing)} known, "
+        f"{len(fixed)} fixed since baseline"
     )
     for issue in sort_issues(new):
         label = issue.impact or "review"

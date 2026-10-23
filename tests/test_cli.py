@@ -13,6 +13,10 @@ def test_from_file_scan_fails_with_new_issues(tmp_path, capsys):
     out = capsys.readouterr().out
     assert rc == EXIT_FAIL
     assert "8 new" in out
+    # totals and baseline buckets are stated separately, not as
+    # "7 violations (8 new)" which reads as contradictory
+    assert "8 total (7 violations, 1 need manual review)" in out
+    assert "Baseline: 8 new, 0 known" in out
     assert "[NEW]" in out
     assert "NOT WCAG certification" in out
 
