@@ -37,7 +37,13 @@ def load_baseline(path: str | Path) -> dict[str, dict]:
     if not p.exists():
         return {}
     try:
-        data = json.loads(p.read_text(encoding="utf-8"))
+        text = p.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise BaselineError(f"baseline file {p} is not valid UTF-8: {exc}") from None
+    except OSError as exc:
+        raise BaselineError(f"cannot read baseline file {p}: {exc}") from None
+    try:
+        data = json.loads(text)
     except json.JSONDecodeError as exc:
         raise BaselineError(f"invalid JSON in baseline file {p}: {exc}") from None
     if not isinstance(data, dict) or not isinstance(data.get("issues"), list):

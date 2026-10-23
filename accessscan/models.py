@@ -114,6 +114,8 @@ def load_axe_file(path: str | Path, route: str | None = None) -> list[Issue]:
         text = p.read_text(encoding="utf-8")
     except FileNotFoundError:
         raise AxeResultError(f"axe result file not found: {p}") from None
+    except UnicodeDecodeError as exc:
+        raise AxeResultError(f"axe result file {p} is not valid UTF-8: {exc}") from None
     except OSError as exc:
         raise AxeResultError(f"cannot read axe result file {p}: {exc}") from None
     try:

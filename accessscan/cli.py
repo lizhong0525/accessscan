@@ -31,6 +31,10 @@ def _load_config(path: str) -> dict:
         data = json.loads(p.read_text(encoding="utf-8"))
     except FileNotFoundError:
         raise ConfigError(f"config file not found: {p}") from None
+    except UnicodeDecodeError as exc:
+        raise ConfigError(f"config file {p} is not valid UTF-8: {exc}") from None
+    except OSError as exc:
+        raise ConfigError(f"cannot read config file {p}: {exc}") from None
     except json.JSONDecodeError as exc:
         raise ConfigError(f"invalid JSON in config file {p}: {exc}") from None
     if not isinstance(data, dict):
@@ -120,7 +124,11 @@ def _cmd_scan(args: argparse.Namespace) -> int:
         if not args.baseline:
             print("error: --update-baseline requires --baseline PATH", file=sys.stderr)
             return EXIT_ERROR
-        write_baseline(args.baseline, issues)
+        try:
+            write_baseline(args.baseline, issues)
+        except OSError as exc:
+            print(f"error: cannot write baseline: {exc}", file=sys.stderr)
+            return EXIT_ERROR
         print(f"Baseline updated: {args.baseline} ({len(issues)} findings)")
 
     if args.json_out:
@@ -201,6 +209,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Findings echo user content (selectors, snippets) that may not be
+    # encodable on legacy Windows consoles (cp1252); never crash on that.
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(errors="replace")
     args = build_parser().parse_args(argv)
     return args.func(args)
 

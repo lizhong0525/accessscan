@@ -114,3 +114,59 @@ def test_live_scan_without_playwright_fails_gracefully(tmp_path, capsys):
     # connection is refused / axe-core bundle missing; all are EXIT_ERROR.
     assert rc == EXIT_ERROR
     assert "error" in captured.err.lower() or rc == EXIT_ERROR
+
+
+def test_non_utf8_input_file_is_clean_error(tmp_path, capsys):
+    p = tmp_path / "latin1.json"
+    p.write_bytes(b"\xff\xfe\x00bad")
+    rc = main(["scan", "--from-file", str(p)])
+    assert rc == EXIT_ERROR
+    assert "UTF-8" in capsys.readouterr().err
+
+
+def test_baseline_path_is_directory_is_clean_error(tmp_path, capsys):
+    rc = main(["scan", "--from-file", str(FIXTURE), "--baseline", str(tmp_path)])
+    assert rc == EXIT_ERROR
+    assert "baseline" in capsys.readouterr().err
+
+
+def test_non_utf8_baseline_is_clean_error(tmp_path, capsys):
+    bl = tmp_path / "bl.bin"
+    bl.write_bytes(b"\xff\xfe")
+    rc = main(["scan", "--from-file", str(FIXTURE), "--baseline", str(bl)])
+    assert rc == EXIT_ERROR
+    assert "UTF-8" in capsys.readouterr().err
+
+
+def test_update_baseline_to_unwritable_path_is_clean_error(tmp_path, capsys):
+    blocker = tmp_path / "blocker"
+    blocker.write_text("not a dir", encoding="utf-8")
+    rc = main([
+        "scan", "--from-file", str(FIXTURE),
+        "--baseline", str(blocker / "baseline.json"), "--update-baseline",
+    ])
+    assert rc == EXIT_ERROR
+    assert "cannot write baseline" in capsys.readouterr().err
+
+
+def test_config_path_is_directory_is_clean_error(tmp_path, capsys):
+    rc = main(["scan", "--config", str(tmp_path)])
+    assert rc == EXIT_ERROR
+    assert "config" in capsys.readouterr().err
+
+
+def test_non_ascii_output_does_not_crash_on_legacy_console(tmp_path, monkeypatch):
+    """Selectors with non-ASCII chars must not crash cp1252 consoles."""
+    import io
+
+    data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    data["results"]["violations"][0]["nodes"][0]["target"] = ["img.日本語"]
+    src = tmp_path / "unicode-axe.json"
+    src.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    out = io.TextIOWrapper(io.BytesIO(), encoding="cp1252")
+    err = io.TextIOWrapper(io.BytesIO(), encoding="cp1252")
+    monkeypatch.setattr("sys.stdout", out)
+    monkeypatch.setattr("sys.stderr", err)
+    rc = main(["scan", "--from-file", str(src)])
+    assert rc == EXIT_FAIL
