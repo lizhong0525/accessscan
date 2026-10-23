@@ -1,0 +1,5 @@
+{
+  "base_url": "http://localhost:8080",
+  "routes": ["/", "/login", "/dashboard"],
+  "tags": ["wcag2a", "wcag2aa"]
+}

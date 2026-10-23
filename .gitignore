@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Node (optional axe-core bundle for live scans)
+node_modules/
+
+# AccessScan artifacts
+report.json
+report.html
+baseline.json
+screenshots/
+
+# Never commit credentials or session state
+*.storage-state.json
+.env

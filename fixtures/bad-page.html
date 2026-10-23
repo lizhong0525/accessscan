@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<!-- Fixture page with deliberately planted accessibility issues.
+     Expected axe-core findings: html-has-lang, document-title, image-alt,
+     label, color-contrast, heading-order, link-name. -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <!-- ISSUE: missing <title> (document-title) -->
+  <style>
+    .faint { color: #bbbbbb; background: #ffffff; } /* ISSUE: low contrast */
+    .hero { background-image: url('hero.jpg'); color: #eeeeee; }
+  </style>
+</head>
+<body>
+  <h1>Welcome</h1>
+  <!-- ISSUE: heading level skipped (heading-order) -->
+  <h3>Subsection</h3>
+
+  <!-- ISSUE: image without alt text (image-alt) -->
+  <img src="logo.png">
+
+  <!-- ISSUE: form input without a label (label) -->
+  <input type="text" name="email" placeholder="Your email">
+
+  <!-- ISSUE: link with no discernible text (link-name) -->
+  <a href="/next"><span class="icon-arrow"></span></a>
+
+  <p class="faint">Hard to read footer text.</p>
+
+  <!-- needs review: contrast over a background image cannot be decided automatically -->
+  <div class="hero">Overlay text</div>
+</body>
+</html>
